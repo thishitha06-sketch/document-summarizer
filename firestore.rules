@@ -1,0 +1,25 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // Helper functions
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+    function isOwner(userId) {
+      return isAuthenticated() && request.auth.uid == userId;
+    }
+    function isValidAnalysis(data) {
+      return data.keys().hasAll(['userId', 'fileName', 'content', 'createdAt']) &&
+             data.userId is string &&
+             data.fileName is string &&
+             data.content is string &&
+             data.createdAt is string;
+    }
+
+    match /analyses/{analysisId} {
+      allow read: if isAuthenticated() && resource.data.userId == request.auth.uid;
+      allow create: if isAuthenticated() && request.resource.data.userId == request.auth.uid && isValidAnalysis(request.resource.data);
+      allow delete: if isAuthenticated() && resource.data.userId == request.auth.uid;
+    }
+  }
+}

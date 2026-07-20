@@ -1,0 +1,5 @@
+{
+  "name": "DocuIntel AI",
+  "description": "Extract text and gain deep insights from OCR images and PDF documents using Gemini AI.",
+  "requestFramePermissions": []
+}

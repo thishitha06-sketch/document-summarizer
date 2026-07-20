@@ -1,0 +1,23 @@
+{
+  "entities": {
+    "Analysis": {
+      "title": "Analysis",
+      "description": "A document analysis result",
+      "type": "object",
+      "properties": {
+        "userId": { "type": "string", "description": "The ID of the user who created the analysis" },
+        "fileName": { "type": "string", "description": "The name of the analyzed file" },
+        "fileType": { "type": "string", "description": "The MIME type of the file" },
+        "content": { "type": "string", "description": "The extracted text and insights" },
+        "createdAt": { "type": "string", "format": "date-time", "description": "When the analysis was created" }
+      },
+      "required": ["userId", "fileName", "content", "createdAt"]
+    }
+  },
+  "firestore": {
+    "/analyses/{analysisId}": {
+      "schema": "Analysis",
+      "description": "Collection of document analyses"
+    }
+  }
+}
