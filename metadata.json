@@ -1,5 +1,8 @@
 {
   "name": "DocuIntel AI",
   "description": "Extract text and gain deep insights from OCR images and PDF documents using Gemini AI.",
-  "requestFramePermissions": []
+  "requestFramePermissions": [],
+  "majorCapabilities": [
+    "MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"
+  ]
 }

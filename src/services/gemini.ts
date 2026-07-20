@@ -1,10 +1,4 @@
-import { GoogleGenAI } from "@google/genai";
-
-const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY || "" });
-
 export async function analyzeDocument(file: File, prompt: string = "Extract all text from this document and provide a detailed summary and key insights.") {
-  const model = "gemini-3-flash-preview";
-  
   // Convert file to base64
   const base64Data = await new Promise<string>((resolve) => {
     const reader = new FileReader();
@@ -15,22 +9,23 @@ export async function analyzeDocument(file: File, prompt: string = "Extract all 
     reader.readAsDataURL(file);
   });
 
-  const response = await ai.models.generateContent({
-    model,
-    contents: [
-      {
-        parts: [
-          { text: prompt },
-          {
-            inlineData: {
-              data: base64Data,
-              mimeType: file.type,
-            },
-          },
-        ],
-      },
-    ],
+  const response = await fetch("/api/analyze", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({
+      base64Data,
+      mimeType: file.type,
+      prompt,
+    }),
   });
 
-  return response.text;
+  if (!response.ok) {
+    const errData = await response.json().catch(() => ({}));
+    throw new Error(errData.error || `HTTP error! Status: ${response.status}`);
+  }
+
+  const data = await response.json();
+  return data.content;
 }

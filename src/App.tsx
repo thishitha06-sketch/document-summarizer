@@ -4,8 +4,7 @@
  */
 
 import { useState, useEffect, useRef, useMemo } from "react";
-import { auth, signIn, logOut, db } from "./lib/firebase";
-import { onAuthStateChanged, User } from "firebase/auth";
+import { db } from "./lib/firebase";
 import { collection, addDoc, query, where, orderBy, onSnapshot, deleteDoc, doc } from "firebase/firestore";
 import { analyzeDocument } from "./services/gemini";
 import { 
@@ -56,8 +55,7 @@ interface Analysis {
 }
 
 export default function App() {
-  const [user, setUser] = useState<User | null>(null);
-  const [loading, setLoading] = useState(true);
+  const user = { uid: "local-user", displayName: "Guest User", email: "guest@docuintel.ai" };
   const [analyzing, setAnalyzing] = useState(false);
   const [analyses, setAnalyses] = useState<Analysis[]>([]);
   const [selectedAnalysis, setSelectedAnalysis] = useState<Analysis | null>(null);
@@ -89,19 +87,6 @@ export default function App() {
   };
 
   useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, (user) => {
-      setUser(user);
-      setLoading(false);
-    });
-    return () => unsubscribe();
-  }, []);
-
-  useEffect(() => {
-    if (!user) {
-      setAnalyses([]);
-      return;
-    }
-
     const q = query(
       collection(db, "analyses"),
       where("userId", "==", user.uid),
@@ -120,7 +105,7 @@ export default function App() {
     });
 
     return () => unsubscribe();
-  }, [user]);
+  }, []);
 
   const filteredAnalyses = useMemo(() => {
     return analyses.filter(item => {
@@ -219,63 +204,6 @@ export default function App() {
     }
   };
 
-  if (loading) {
-    return (
-      <div className="flex items-center justify-center min-h-screen bg-[var(--color-bg-main)]">
-        <div className="relative">
-          <div className="absolute inset-0 blur-2xl bg-brand-blue/20 animate-pulse rounded-full" />
-          <Loader2 className="w-10 h-10 animate-spin text-brand-blue relative z-10" />
-        </div>
-      </div>
-    );
-  }
-
-  if (!user) {
-    return (
-      <div className="flex flex-col items-center justify-center min-h-screen bg-[var(--color-bg-main)] p-4 relative overflow-hidden">
-        {/* Background Glows */}
-        <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-brand-blue/10 blur-[120px] rounded-full" />
-        <div className="absolute bottom-1/4 right-1/4 w-96 h-96 bg-brand-purple/10 blur-[120px] rounded-full" />
-        
-        <motion.div 
-          initial={{ opacity: 0, scale: 0.95 }}
-          animate={{ opacity: 1, scale: 1 }}
-          className="max-w-md w-full bg-[var(--color-bg-card)]/80 backdrop-blur-xl border border-white/10 p-10 rounded-3xl shadow-2xl text-center relative z-10"
-        >
-          <div className="w-20 h-20 bg-brand-blue/10 rounded-2xl flex items-center justify-center mx-auto mb-8 border border-brand-blue/20 relative group">
-            <div className="absolute inset-0 bg-brand-blue/20 blur-xl opacity-0 group-hover:opacity-100 transition-opacity" />
-            <Sparkles className="w-10 h-10 text-brand-blue relative z-10" />
-          </div>
-          
-          <h1 className="text-4xl font-bold text-white mb-3 tracking-tight">DocuIntel <span className="text-brand-blue">AI</span></h1>
-          <p className="text-slate-400 mb-10 text-sm leading-relaxed">
-            Harness the power of Gemini AI to extract deep insights from your documents instantly.
-          </p>
-          
-          <button
-            onClick={signIn}
-            className="w-full py-3.5 px-6 bg-white hover:bg-slate-100 text-black font-semibold rounded-xl transition-all flex items-center justify-center gap-3 shadow-lg active:scale-[0.98]"
-          >
-            <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" className="w-5 h-5" alt="Google" />
-            Continue with Google
-          </button>
-          
-          <div className="mt-8 flex items-center justify-center gap-6 text-slate-500">
-            <div className="flex items-center gap-1.5 text-xs font-medium">
-              <Zap className="w-4 h-4 text-brand-blue" /> Fast
-            </div>
-            <div className="flex items-center gap-1.5 text-xs font-medium">
-              <Cpu className="w-4 h-4 text-brand-purple" /> AI-Powered
-            </div>
-            <div className="flex items-center gap-1.5 text-xs font-medium">
-              <ShieldAlert className="w-4 h-4 text-green-400" /> Secure
-            </div>
-          </div>
-        </motion.div>
-      </div>
-    );
-  }
-
   return (
     <div className="min-h-screen bg-[var(--color-bg-main)] flex flex-col font-sans selection:bg-brand-blue/30">
       {/* Header */}
@@ -318,25 +246,12 @@ export default function App() {
           
           <div className="flex items-center gap-3 pl-1">
             <div className="hidden md:flex flex-col items-end">
-              <span className="text-sm font-medium text-white leading-none mb-1">{user.displayName || 'User'}</span>
-              <span className="text-[10px] text-slate-500">{user.email}</span>
+              <span className="text-sm font-medium text-white leading-none mb-1">Guest Mode</span>
+              <span className="text-[10px] text-slate-500">Anonymous Access</span>
             </div>
-            <button
-              onClick={logOut}
-              className="relative group rounded-full overflow-hidden border-2 border-transparent hover:border-brand-blue/50 transition-all"
-              title="Sign Out"
-            >
-              {user.photoURL ? (
-                <img src={user.photoURL} alt="Profile" className="w-9 h-9 rounded-full object-cover" />
-              ) : (
-                <div className="w-9 h-9 rounded-full bg-brand-blue/20 flex items-center justify-center text-brand-blue">
-                  <UserIcon className="w-5 h-5" />
-                </div>
-              )}
-              <div className="absolute inset-0 bg-black/50 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
-                <LogOut className="w-4 h-4 text-white" />
-              </div>
-            </button>
+            <div className="w-9 h-9 rounded-full bg-brand-blue/10 border border-brand-blue/20 flex items-center justify-center text-brand-blue" title="Guest Mode Active">
+              <UserIcon className="w-5 h-5" />
+            </div>
           </div>
         </div>
       </header>
