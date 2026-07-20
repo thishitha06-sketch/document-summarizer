@@ -163,7 +163,8 @@ export default function App() {
           });
         } catch (err: any) {
           console.error(`Error analyzing ${file.name}:`, err);
-          setError(prev => (prev ? prev + "\n" : "") + `Failed to analyze ${file.name}`);
+          const detailedMessage = err?.message || String(err);
+          setError(prev => (prev ? prev + "\n" : "") + `Failed to analyze ${file.name}: ${detailedMessage}`);
         } finally {
           setProcessingQueue(prev => prev.filter(p => p.id !== tempId));
         }
